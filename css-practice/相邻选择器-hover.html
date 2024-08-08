@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+
+        <style>
+            .header {
+                position: relative;
+            }
+            .user {
+                cursor: pointer;
+            }
+            /* 使用相邻选择器 */
+            .user:hover + .menu {
+                display: list-item;
+            }
+            /* menu的位置可以使用absolute定位，来脱离文档流 */
+            .menu {
+                display: none;
+                position: absolute;
+                cursor: pointer;
+            }
+            /* menu本身也需要通过hover保持显示，以避免鼠标从.user类上移开时，menu类回归display:none */
+            .menu:hover {
+                display: list-item;
+            }
+            /* 当menu与.user类需要间隙时，为了保证hover的连续性，可以利用伪类构造一块透明的过度区域 */
+            .menu:before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: -20px;
+                width: 100%;
+                height: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <li class="user">用户</li>
+            <div class="menu">
+                <ul>
+                    <li>账户设置</li>
+                    <li>登录</li>
+                </ul>
+            </div>
+        </div>
+    </body>
+</html>

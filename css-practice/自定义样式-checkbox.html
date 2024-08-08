@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+
+        <style>
+            input[type='checkbox'] {
+                display: none;
+            }
+            /* 该checkbox的实现可以通过自定义字体图标来实现自定义的选中效果 */
+            .checkbox {
+                display: block;
+                width: 24px;
+                height: 24px;
+                border: 4px solid #febb60;
+            }
+            input[type='checkbox']:checked + .checkbox {
+                border-color: #18e5e8;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <!-- 写在label标签内是为了能够在点击span的时候改变checkbox的状态 -->
+            <label>
+                <input type="checkbox" />
+                <span class="checkbox"></span>
+            </label>
+        </div>
+    </body>
+</html>
