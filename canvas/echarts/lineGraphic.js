@@ -64,12 +64,12 @@ function init() {
             ctx.moveTo(baseXAxis, baseYAxis)
             ctx.lineTo(baseXAxis, baseYAxis + 6)
 
+            ctx.textAlign = 'center'
             ctx.fillText(dataSeries.xAixs.data[i - 1], baseXAxis, baseYAxis + 18)
-            
+
             ctx.stroke()
             console.error('---------- aiden --------------', baseXAxis)
         }
-        // ctx.textAlign = center
     }
 
     /** 处理Y轴 */
