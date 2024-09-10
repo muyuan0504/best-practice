@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            .triangle {
+                width: 100px;
+                height: 100px;
+                border-left: 50px solid #000;
+                border-right: 50px solid #333;
+                border-top: 50px solid #666;
+                border-bottom: 50px solid #999;
+                background-color: #ccc;
+            }
+            .triangle2 {
+                width: 0px;
+                height: 0px;
+                border-left: 50px solid #000;
+                border-right: 50px solid #333;
+                border-top: 50px solid #666;
+                border-bottom: 50px solid #999;
+                background-color: #ccc;
+            }
+            .triangle3 {
+                width: 0px;
+                height: 0px;
+                border-left: 50px solid #000;
+                border-right: 50px solid #333;
+                border-bottom: 50px solid #999;
+                background-color: #ccc;
+            }
+            .triangle4 {
+                width: 0px;
+                height: 0px;
+                border-left: 50px solid transparent;
+                border-right: 50px solid transparent;
+                border-bottom: 50px solid #999;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <p>width:100px; height: 100px; border: 50px</p>
+            <div class="triangle"></div>
+        </div>
+        <div>
+            <p>width:0px; height: 0px; border: 50px</p>
+            <div class="triangle2"></div>
+        </div>
+        <div>
+            <p>width:0px; height: 0px; border: 50px; border-top 去掉</p>
+            <div class="triangle3"></div>
+        </div>
+        <div>
+            <p>width:0px; height: 0px; border: 50px; border-top 去掉， left, right 透明；<strong>得到一个三角形</strong></p>
+            <div class="triangle4"></div>
+        </div>
+    </body>
+</html>

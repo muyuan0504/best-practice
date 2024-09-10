@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            p {
+                margin-top: 40px;
+            }
+            span[data-title] {
+                position: relative;
+            }
+            span[data-title]:hover:before {
+                content: attr(data-title);
+                position: absolute;
+                top: -150%;
+                left: 50%;
+                transform: translateX(-50%);
+                white-space: nowrap;
+                background: #ccc;
+                padding: 4px;
+            }
+        </style>
+    </head>
+    <body>
+        <p>hello, <span data-title="隐藏剧情触发">想知道是什么吗</span></p>
+    </body>
+</html>
