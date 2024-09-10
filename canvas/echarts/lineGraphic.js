@@ -36,6 +36,9 @@ function init() {
     drawXAxis()
     drawXGap()
     drawYAxis()
+    drawYGap()
+
+    renderData()
 
     /** 像素比适配 */
     function adaptDpr(canvas, width, height) {
@@ -68,7 +71,6 @@ function init() {
             ctx.fillText(dataSeries.xAixs.data[i - 1], baseXAxis, baseYAxis + 18)
 
             ctx.stroke()
-            console.error('---------- aiden --------------', baseXAxis)
         }
     }
 
@@ -82,17 +84,36 @@ function init() {
 
     /** 处理Y轴数据坐标段 */
     function drawYGap() {
-        for (let i = 1; i <= yGapLen; i++) {
+        for (let i = 0; i < yGapLen; i++) {
             ctx.beginPath()
-            const baseXAxis = xPadding + xGap * i
-            const baseYAxis = yPadding + yGap * yGapLen
+            const baseXAxis = xPadding
+            const baseYAxis = yPadding + yGap * (yGapLen - i)
             ctx.moveTo(baseXAxis, baseYAxis)
-            ctx.lineTo(baseXAxis, baseYAxis + 6)
+            ctx.lineTo(baseXAxis + 6, baseYAxis)
 
-            ctx.fillText(dataSeries.xAixs.data[i - 1], baseXAxis, baseYAxis + 18)
-            // ctx.textAlign = center
+            ctx.textAlign = 'center'
+            ctx.fillText(dataSeries.yAxis.data[i], baseXAxis - 18, baseYAxis + 4)
+
             ctx.stroke()
-            console.error('---------- aiden --------------', baseXAxis)
+        }
+    }
+
+    /** 处理X轴数据坐标段 */
+    function renderData() {
+        for (let i = 0; i < dataSeries.series.length; i++) {
+            const data = dataSeries.series[i].data
+
+            for (let j = 0; j < data.length; j++) {
+                ctx.beginPath()
+                const baseXAxis = xPadding + xGap * (j + 1)
+                const baseYAxis = yPadding + yGap * yGapLen
+
+                
+
+                ctx.moveTo(baseXAxis, baseYAxis)
+                ctx.arc(baseXAxis, baseYAxis, 4, 0, 8 * Math.PI)
+                ctx.stroke()
+            }
         }
     }
 }
