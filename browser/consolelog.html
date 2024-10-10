@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <div class="class-el">
+            <div>点击调用函数</div>
+        </div>
+        <script>
+            /**
+             * console.table: 将对象数组或类数组对象以表格形式显示出来，列出每个对象的属性
+             * 非常适合用于查看数组中的每个对象的属性值
+             */
+            const baseArr = [
+                { a: 1, b: 2 },
+                { a: 2, b: 3 },
+                { a: 3, b: 4 },
+                { b: 5, c: 6 },
+            ]
+
+            console.table(baseArr)
+
+            const commonArray = [1, 2, 3]
+            console.table(commonArray)
+
+            /**
+             * console.dir: 以树形结构显示一个对象的所有属性和子属性。
+             * 它主要用于查看 JavaScript 对象的详细层次结构。它适合用于查看对象的嵌套结构，特别是 DOM 元素
+             *
+             */
+            const baseObj = {
+                name: 'aiden',
+            }
+            console.dir(baseObj)
+
+            const divContain = document.querySelector('.class-el')
+            console.dir(divContain)
+
+            /**
+             * 打印带样式
+             * %c 指令：接收css样式属性 -> 指令前的文本不会受到影响，但指令后的文本将会使用参数中声明的 CSS 样式
+             * %s：打印字符串，将当前输入内容以字符串的形式输出
+             */
+            console.log('%c 控制台输出样式', 'background: #222; color: #bada55')
+            const style = 'background: #222; color: #bada55'
+            console.log('%c%s', style, 123, typeof 1223, 1223)
+
+            /**
+             * console.trace() 追踪函数调用,打印当前的堆栈跟踪,可以显示当前代码执行路径，以及函数调用的顺序
+             * console.trace 的应用场景非常广泛，特别适用于以下情况：
+             * 1. 调试函数调用顺序：当你需要了解某个函数是如何被调用的，或者了解调用路径时，可以使用 console.trace
+             * 2. 追踪错误：当代码中出现错误时，可以在错误处理逻辑中添加 console.trace，以了解错误的调用链
+             * 3. 优化性能：通过跟踪某些函数的调用路径，可以识别出冗余或多余的函数调用，从而优化代码性能
+             */
+            function test() {
+                console.trace('函数被调用')
+            }
+
+            divContain.addEventListener(
+                'click',
+                function () {
+                    test()
+                },
+                true
+            )
+
+            setTimeout(() => {
+                test()
+            }, 1000)
+        </script>
+    </body>
+</html>
