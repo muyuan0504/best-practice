@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            button {
+                margin-top: 12px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="memory-out"></div>
+        <button>点击更新</button>
+        <script>
+            /**
+             * DOM 内存泄漏检查
+             * 只要存在一个引用就不会进行GC回收，有些DOM节点没有append到DOM中，但是存在引用指向它，它就是一个分离的DOM节点，这个时候就发生了DOM内存泄漏
+             */
+
+            let elRef = null
+
+            document.querySelector('button').addEventListener(
+                'click',
+                function () {
+                    elRef = document.createElement('div')
+                },
+                false
+            )
+        </script>
+    </body>
+</html>

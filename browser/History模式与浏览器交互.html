@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <div class="contain"></div>
+        <script>
+            /** 使用H5的history实现本地路由跳转
+             * 由于使用了history跳转，为了保证页面经过刷新后，pageIndex的数据跟history缓存一致性，所以这里的pageIndex的初始值需要跟history做一次同步
+             * 当然也可以使用下面两种方法来初始化getIndex保证数据一致性：
+             * 1. 使用localStorage；
+             * 2. window.history.pushState(null, null, '?page=' + pageIndex)，将pageIndex挂到参数上，刷新的时候从参数上面获取初始值。
+             */
+            console.log(window.history)
+
+            const getCache = window.history.state.data
+            let pageIndex = getCache === null ? 0 : getCache
+
+            /** 处理基本的渲染更新逻辑 */
+            function renderPage(data) {
+                document.querySelector('.contain').innerHTML = ''
+                let pageHtml = `
+				<button>上一页</button>
+				<p>${data}</p>
+				<button onclick='nextPage()'>下一页</button>
+				`
+                const section = document.createElement('section')
+                section.innerHTML = pageHtml
+                document.querySelector('.contain').appendChild(section)
+            }
+            renderPage(pageIndex)
+            function nextPage() {
+                pageIndex++
+                renderPage(pageIndex)
+                // 将当前操作push入栈, 这个时候浏览器左上角返回按钮激活
+                window.history.pushState({ data: pageIndex }, null, window.location.href)
+            }
+
+            /**
+             * HTML5新增事件 window.onpopstate API
+             * 需要注意的是，popstate事件只能监听自己调用push进去的页面栈，如果不是自己push的，那么不会出发popstate
+             *
+             * 为什么无法监听普通的单击后退按钮，只能监听自己push的页面栈的后退：
+             * 是浏览器基于安全因素的考虑，当用户从其他网站的页面后退到我方网站页面，如果监听了popstate，可能存在获取到其他网站数据的风险。
+             */
+            // window.onpopstate = function (e) {}
+            window.addEventListener('popstate', function (e) {
+                let page = 0
+                // 由于第一页没有pushState,所以返回到第一页的时候是没有数据的，这里需要判断下 e.state ！== null
+                if (e.state !== null) {
+                    page = e.state.data
+                }
+                renderPage(page)
+                pageIndex = page
+            })
+        </script>
+    </body>
+</html>
