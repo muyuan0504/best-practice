@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>太阳系行星公转丐版</title>
+        <style>
+            .galaxy {
+                width: 1300px;
+                height: 1300px;
+                background: darkgray;
+                position: relative;
+            }
+            .sun {
+                position: absolute;
+                width: 100px;
+                height: 100px;
+                left: 600px;
+                top: 600px;
+                background: gold;
+                border-radius: 50%;
+            }
+            .mercury {
+                position: absolute;
+                background: blue;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                left: 700px;
+                top: 625px;
+                /* transform-origin属性表示在对元素进行变换的时候，设置围绕哪个点进行变化，其中每个值都表示一个偏移量，默认的转换原点是 center */
+                transform-origin: -50px 25px;
+                /* animation: rotation 2.4s linear infinite; */
+            }
+
+            .earth {
+                position: absolute;
+                background: #00ff62;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                left: 750px;
+                top: 625px;
+                /* transform-origin属性表示在对元素进行变换的时候，设置围绕哪个点进行变化，其中每个值都表示一个偏移量，默认的转换原点是 center */
+                transform-origin: -50px 25px;
+                /* animation: rotation 2.4s linear infinite; */
+            }
+
+            .moveY {
+                animation: moveY 2s ease-in-out infinite alternate;
+            }
+
+            @keyframes rotation {
+                to {
+                    transform: rotate(1turn);
+                }
+            }
+
+            @keyframes moveY {
+                to {
+                    transform: translateY(-200px);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="galaxy">
+            <!-- 太阳 -->
+            <div class="sun"></div>
+            <!-- 水星 -->
+            <div class="mercury"></div>
+            <!-- 金星 -->
+            <div class="venus"></div>
+            <!-- 地球 -->
+            <div class="moveY">
+                <div class="earth"></div>
+            </div>
+        </div>
+        <script>
+            /**
+             * 1. 加上 translateZ(0)，可以触发 3D GPU加速，让动画更流畅？
+             * 没有必要，当需要GPU加速时，现代浏览器会自动开启; 反而过多的translateZ会造成页面渲染错乱，特别是在Safari上
+             *
+             * 2.CSS动画的性能怎么样
+             * css动画的性能优于Js动画，需要注意的是如果用position/width/height/margin等重绘属性做动画，性能可能会有影响
+             */
+        </script>
+    </body>
+</html>

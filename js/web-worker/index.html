@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <div id="result"></div>
+        <script>
+            console.log('====================================')
+            console.log(typeof Worker)
+            console.log('====================================')
+            const w = new Worker('./worker.js')
+            w.onmessage = function (event) {
+                document.getElementById('result').innerHTML = event.data
+            }
+        </script>
+    </body>
+</html>
