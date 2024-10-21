@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            img {
+                width: 320px;
+                height: auto;
+            }
+            .filter {
+                filter: grayscale(100%);
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+            <img class="img-el" src="./static/8.jpg" alt="" />
+        </div>
+        <button onclick="changeGray()">变成灰色</button>
+        <div class="canvas-contain">
+            <canvas type="2d" class="canvas-el"></canvas>
+        </div>
+        <button onclick="useCanvas()">变成灰色</button>
+        <script>
+            /**
+             * 利用CSS的filter属性，将图片变成灰色
+             * grayscale(%): 将图像转换为灰度图像,值默认是0; 值为100%则完全转为灰度图像，值为0%图像无变化。值在0%到100%之间，则是效果的线性乘子
+             */
+            function changeGray() {
+                const imgEl = document.querySelector('.img-el')
+                imgEl.classList.add('filter')
+            }
+
+            /**
+             * 通过 canvas 处理图像, 常用的灰度算法有两种
+             * 1. Gray = (red + green + blue) / 3
+             * 2. 按照人眼对三原色的感知度：绿 > 红 > 蓝
+             * Gray = (red * 0.3 + green * 0.59 + blue * 0.11)
+             * 第二种更符合客观实际，所以一般用算法2的处理公式即可。
+             */
+            function useCanvas() {
+                const { width, height } = document.querySelector('.img-el')
+
+                const contain = document.querySelector('.canvas-contain')
+                contain.style.width = width + 'px'
+                contain.style.height = height + 'px'
+
+                const canvas = document.querySelector('.canvas-el')
+                const ctx = canvas.getContext('2d')
+                const dpr = window.devicePixelRatio
+                canvas.style.width = width + 'px'
+                canvas.style.height = height + 'px'
+                ctx.scale(1 / 6, 1 / 6)
+
+                const img = new Image()
+                img.src = './static/8.jpg'
+                img.onload = function () {
+                    ctx.drawImage(this, 0, 0)
+                    blackWhite()
+                }
+
+                function blackWhite() {
+                    const imgData = ctx.getImageData(0, 0, width, height)
+                    console.error('---------- aiden --------------', imgData)
+                    const data = imgData.data
+                    const len = data.length
+
+                    for (let i = 0; i < len; i += 4) {
+                        const grey = 0.3 * data[i] + 0.59 * data[i + 1] + 0.11 * data[i + 2]
+                        data[i] = data[i + 1] = data[i + 2] = grey
+                    }
+
+                    ctx.putImageData(imgData, 0, 0)
+                }
+            }
+        </script>
+    </body>
+</html>
