@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <script>
+            function set() {
+                console.log('Start')
+
+                setInterval(() => {
+                    console.log('Interval callback')
+                }, 1000)
+
+                for (let i = 0; i < 1000000000; i++) {} // 耗时的同步任务
+
+                console.log('End')
+            }
+
+            function test() {
+                console.log('Start')
+
+                let count = 0
+                let intervalId = setInterval(() => {
+                    console.log('Interval callback')
+                    count++
+                    if (count === 5) {
+                        clearInterval(intervalId)
+                    }
+                }, 1000)
+
+                for (let i = 0; i < 1000000000; i++) {} // 耗时的同步任务
+
+                console.log('End')
+            }
+
+            test()
+
+            /**
+             * fun1,fun2执行后依次打印：
+             * fun1 0
+             * fun2 - 1 21
+             * fun2 - 2 41
+             * fun3 62
+             * fun4 83
+             *
+             * setTimeout是当前执行单元都执行完才开始计时，而setInterval是在设定完计时器后就立马计时
+             */
+            let scriptBegin = Date.now()
+            fun1()
+            fun2()
+
+            // 需要执行20ms的工作单元
+            function act(fnName) {
+                console.log(fnName, Date.now() - scriptBegin)
+                let begin = Date.now()
+                // 暂停20ms
+                while (Date.now() - begin < 20);
+            }
+
+            function fun1() {
+                let fun3 = () => act('fun3')
+                setTimeout(fun3, 0)
+
+                act('fun1')
+            }
+
+            function fun2() {
+                act('fun2 - 1')
+                let itv
+                const fun4 = () => {
+                    act('fun4')
+                    clearInterval(itv)
+                }
+                itv = setInterval(fun4, 20)
+
+                act('fun2 - 2')
+            }
+        </script>
+    </body>
+</html>
