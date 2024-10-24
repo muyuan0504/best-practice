@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Welcome</title>
+    </head>
+    <body>
+        <h1>
+            Welcome,
+            <!-- 
+			如果此时携带恶意脚本参数：/xss.html?name=<script>alert('XSS Attack!');</script>;
+            通过document.write，插入了恶意脚本：name=<script>alert('XSS Attack!');</script>
+            此时页面会弹出alert 
+			-->
+            <script>
+                // 假设正常的链接参数是：/xss.html?name=helloWorld，那么页面显示 Welcome, helloWorld
+                document.write(decodeURIComponent(location.search.split('name=')[1]))
+            </script>
+        </h1>
+    </body>
+</html>
