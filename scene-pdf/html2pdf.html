@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <script
+            async
+            src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+            integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"></script>
+    </head>
+    <body>
+        <div id="container">123</div>
+        <div id="btn">下载pdf</div>
+
+        <script>
+            const downloadBtn = document.querySelector('#btn')
+            downloadBtn.addEventListener('click', () => {
+                downPdf()
+            })
+
+            function downPdf() {
+                const element = document.querySelector('#container')
+                /**
+                 * html2pdf处理流程： .from() -> {.toContainer() -> .toCanvas() -> .toImg() -> .toPdf() } -> .save()
+                 */
+                const pdfGenerator = html2pdf()
+                const opt = {
+                    margin: 0, // 设置pdf的margin
+                    filename: 'test.pdf',
+                    pagebreak: {
+                        mode: 'legacy',
+                    },
+                    image: { type: 'jpeg', quality: 1 },
+                    html2canvas: { scale: 1 },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+                }
+
+                // New Promise-based usage:
+                html2pdf()
+                    .set(opt)
+                    .from(element)
+                    .save()
+                    .finally(() => {
+                        console.log('pdf文件导出')
+                    })
+            }
+        </script>
+    </body>
+</html>
