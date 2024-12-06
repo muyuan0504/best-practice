@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                width: 750px;
+                background: gray;
+                box-sizing: border-box;
+            }
+            .title {
+                color: #d84476;
+            }
+            .div {
+                color: #fff;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="title">这个是标题</div>
+            <img src="./img.jpeg" alt="" />
+        </div>
+        <script>
+            const elContainer = document.querySelector('.container')
+            const rect = elContainer.getBoundingClientRect()
+            const baseStyle = getComputedStyle(elContainer)
+            const containerPos = {
+                width: parseInt(rect.width),
+                height: parseInt(rect.height),
+                x: parseInt(rect.x),
+                y: parseInt(rect.y),
+            }
+            const nodeRenderList = []
+            generateRenderTree(elContainer)
+
+            console.log(nodeRenderList)
+
+            function generateRenderTree() {
+                getChildrenNodeInfo(elContainer)
+                function getChildrenNodeInfo(el) {
+                    const childNodeList = el.childNodes
+                    const len = childNodeList.length
+                    if (len === 0) return
+                    for (let i = 0; i < len; i++) {
+                        const node = childNodeList[i]
+                        if (node.nodeType === 1 && node.tagName.toLowerCase() === 'img') {
+                            // 图片标签处理
+                            const imgItem = handleNodeImg(node)
+                            nodeRenderList.push(imgItem)
+                        } else if (node.nodeType === 3) {
+                            // 文本节点处理
+                            const textItem = handleNodeText(node)
+                            textItem && nodeRenderList.push(textItem)
+                            continue
+                        } else if (node.nodeType === 1) {
+                            // 对于每一个标签，要处理元素可能的边框/背景色等属性
+                            // handleNodeFill(node)
+                            getChildrenNodeInfo(node)
+                        }
+                    }
+                }
+                function handleNodeFill(node) {
+                    /** 处理块级元素 */
+                    const styleInfo = getComputedStyle(node)
+                    if (styleInfo.backgroundColor === 'rgba(0, 0, 0, 0)') return
+                }
+                function handleNodeText(node) {
+                    if (node.nodeValue.trim() === '') return
+                    if (node.parentNode) {
+                        const styleInfo = getComputedStyle(node.parentNode)
+                        return {
+                            type: 'TEXT',
+                            content: node.nodeValue,
+                            fontSize: styleInfo.fontSize,
+                            fontFamily: styleInfo.fontFamily,
+                            color: styleInfo.color,
+                            x: 0,
+                            y: 0,
+                        }
+                    }
+                }
+                function handleNodeImg(node) {
+                    return {
+                        type: 'IMAGE',
+                        src: node.src,
+                        width: node.width,
+                        height: node.height,
+                        x: node.offsetLeft - parseInt(rect.x),
+                        y: node.offsetTop - parseInt(rect.y),
+                    }
+                }
+            }
+
+			const canvasImgData = {
+                base64Data: undefined,
+                width: 0,
+                height: 0,
+            }
+			generateCanvas()
+            function generateCanvas() {
+                const canvas = document.createElement('canvas')
+                canvas.width = containerPos.width
+                canvas.height = containerPos.height
+
+                const ctx = canvas.getContext('2d')
+                ctx.fillStyle = baseStyle.backgroundColor
+                ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+                for (let i = 0; i < nodeRenderList.length; i++) {
+                    const type = nodeRenderList[i].type
+                    switch (type) {
+                        case 'TEXT':
+                            fillText(nodeRenderList[i])
+                            break
+                        case 'IMAGE':
+                            fillImg(nodeRenderList[i])
+                            break
+                        default:
+                            break
+                    }
+                }
+
+                setTimeout(() => {
+                    const img = new Image()
+                    const base64Data = canvas.toDataURL('image/png')
+                    img.src = base64Data
+                    canvasImgData.width = canvas.width
+                    canvasImgData.height = canvas.height
+                    canvasImgData.base64Data = base64Data
+                    console.log('图片base64数据：', canvasImgData)
+					img.style.marginTop = '16px'
+                    document.body.appendChild(img)
+                }, 1000)
+
+                function fillText(item) {
+                    ctx.fillStyle = item.color
+                    ctx.font = `${item.fontSize} ${item.fontFamily}`
+                    // fillText 的坐标是基于文本的 基线 来决定的
+                    ctx.textBaseline = 'middle'
+                    // 基于中线对齐，所以文本的y轴为初始的item.y + 原始文本区域高度 / 2, 这里为了省事，就不详细计算了
+                    ctx.fillText(item.content, item.x, item.y + 11)
+                }
+                function fillImg(item) {
+                    const img = new Image()
+                    img.src = item.src
+                    img.onload = function () {
+                        ctx.drawImage(img, item.x, item.y, item.width, item.height) // 在指定位置绘制图片
+                    }
+                }
+            }
+        </script>
+    </body>
+</html>

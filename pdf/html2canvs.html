@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                width: 750px;
+                background: gray;
+                box-sizing: border-box;
+            }
+            .title {
+                color: #d84476;
+            }
+            .div {
+                color: #fff;
+            }
+            button {
+                margin: 0;
+                padding: 4px;
+                height: 28px;
+                line-height: 20px;
+                margin-top: 12px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- 压缩一下html结构，不然会因为元素节点之间的换行和留白，多出来比较多点空text节点 -->
+        <!-- <div class="container"><h1>这个是标题</h1><h3>图片</h3><img src="./img.jpeg" alt="" /></div> -->
+        <!-- <button>生成图片</button> -->
+        <div class="container">
+            <div class="title">这个是标题</div>
+            <img src="./img.jpeg" alt="" />
+        </div>
+        <button class="toImg">生成图片</button>
+        <button class="toPdf">下载pdf</button>
+        <script>
+            // function appendEle() {
+            //     const htmlStr = '<div class="container"><h1>这个是标题</h1><h3>图片</h3><img src="./img.jpeg" alt="" /></div><button>生成图片</button>'
+            //     document.body.innerHTML = htmlStr
+            // }
+            // appendEle()
+
+            const canvasImgData = {
+                base64Data: undefined,
+                width: 0,
+                height: 0,
+            }
+
+            const elContainer = document.querySelector('.container')
+            const rect = elContainer.getBoundingClientRect()
+            const baseStyle = getComputedStyle(elContainer)
+            // padding是需要偏移的量
+            const paddingLeft = parseInt(baseStyle.paddingLeft.split('px')[0])
+            const paddingTop = parseInt(baseStyle.paddingTop.split('px')[0])
+            const containerPos = {
+                width: parseInt(rect.width),
+                height: parseInt(rect.height),
+                x: parseInt(rect.x),
+                y: parseInt(rect.y),
+            }
+            const nodeRenderList = []
+
+            document.querySelector('.toImg').addEventListener('click', () => {
+                generateRenderTree()
+                generateCanvas()
+            })
+
+            document.querySelector('.toPdf').addEventListener('click', () => {
+                // generatePdf()
+                createPdf()
+            })
+
+            /**
+             * 1. 获取渲染节点, 遍历DOM树，获取样式，子节点信息,收集render信息
+             * nodeRenderList: 后续用于渲染的节点信息
+             * 在前期定义好渲染的类型，及其相关的属性：
+             * · 背景填充
+             * · 边框
+             * · 文本内容
+             * · 图像
+             */
+            function generateRenderTree() {
+                getChildrenNodeInfo(elContainer)
+                function getChildrenNodeInfo(el) {
+                    const childNodeList = el.childNodes
+                    const len = childNodeList.length
+                    if (len === 0) return
+                    for (let i = 0; i < len; i++) {
+                        const node = childNodeList[i]
+                        if (node.nodeType === 1 && node.tagName.toLowerCase() === 'img') {
+                            // 图片标签处理
+                            const imgItem = handleNodeImg(node)
+                            nodeRenderList.push(imgItem)
+                        } else if (node.nodeType === 3) {
+                            // 文本节点处理
+                            const textItem = handleNodeText(node)
+                            textItem && nodeRenderList.push(textItem)
+                            continue
+                        } else if (node.nodeType === 1) {
+                            // 对于每一个标签，要处理元素可能的边框/背景色等属性
+                            // handleNodeFill(node)
+                            getChildrenNodeInfo(node)
+                        }
+                    }
+                }
+                function handleNodeFill(node) {
+                    /** 处理块级元素 */
+                    const styleInfo = getComputedStyle(node)
+                    if (styleInfo.backgroundColor === 'rgba(0, 0, 0, 0)') {
+                        console.error('---------- aiden -------------透明色-')
+                    }
+                    console.error('---------- aiden --------------', baseStyle.backgroundColor)
+                    console.log('styleInfo', styleInfo.backgroundColor, styleInfo.border)
+                }
+                function handleNodeText(node) {
+                    if (node.nodeValue.trim() === '') return
+                    /**
+                     * 文本节点的绘制信息包括：
+                     * 1. x,y轴绘制起点位置，通过父元素获取
+                     * 2. 文本的字体信息，font-size, color
+                     * 3. TOD：文本的超出一行...省略号的处理
+                     * 对于文本节点的处理，由于无法直接通过getComputedStyle-api获取文本的样式，只能通过其父元素获取计算后的样式，这些样式会被应用到文本节点上
+                     */
+                    if (node.parentNode) {
+                        const styleInfo = getComputedStyle(node.parentNode)
+                        return {
+                            type: 'TEXT',
+                            content: node.nodeValue,
+                            fontSize: styleInfo.fontSize,
+                            fontFamily: styleInfo.fontFamily,
+                            color: styleInfo.color,
+                            x: 0,
+                            y: 0,
+                        }
+                    }
+                }
+                function handleNodeImg(node) {
+                    return {
+                        type: 'IMAGE',
+                        src: node.src,
+                        width: node.width,
+                        height: node.height,
+                        x: node.offsetLeft - parseInt(rect.x),
+                        y: node.offsetTop - parseInt(rect.y),
+                    }
+                }
+            }
+
+            /**
+             * 2. html -> canvas
+             * 将html节点绘制到canvas中
+             */
+            function generateCanvas() {
+                const canvas = document.createElement('canvas')
+                canvas.width = containerPos.width
+                canvas.height = containerPos.height
+
+                const ctx = canvas.getContext('2d')
+                ctx.fillStyle = baseStyle.backgroundColor
+                ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+                for (let i = 0; i < nodeRenderList.length; i++) {
+                    const type = nodeRenderList[i].type
+                    switch (type) {
+                        case 'TEXT':
+                            fillText(nodeRenderList[i])
+                            break
+                        case 'IMAGE':
+                            fillImg(nodeRenderList[i])
+                            break
+                        default:
+                            break
+                    }
+                }
+
+                setTimeout(() => {
+                    const img = new Image()
+                    const base64Data = canvas.toDataURL('image/png')
+                    img.src = base64Data
+                    canvasImgData.width = canvas.width
+                    canvasImgData.height = canvas.height
+                    canvasImgData.base64Data = base64Data
+                    console.log('图片base64数据：', canvasImgData)
+                    document.body.appendChild(img)
+                }, 1000)
+
+                function fillText(item) {
+                    ctx.fillStyle = item.color
+                    ctx.font = `${item.fontSize} ${item.fontFamily}`
+                    // fillText 的坐标是基于文本的 基线 来决定的
+                    ctx.textBaseline = 'middle'
+                    // 基于中线对齐，所以文本的y轴为初始的item.y + 原始文本区域高度 / 2, 这里为了省事，就不详细计算了
+                    ctx.fillText(item.content, item.x, item.y + 11)
+                }
+                function fillImg(item) {
+                    const img = new Image()
+                    img.src = item.src
+                    img.onload = function () {
+                        ctx.drawImage(img, item.x, item.y, item.width, item.height) // 在指定位置绘制图片
+                    }
+                }
+            }
+        </script>
+    </body>
+</html>
