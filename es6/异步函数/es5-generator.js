@@ -1,81 +1,65 @@
 /**
- * 生成器函数的es5垫片代码是如何实现的?
+ * 生成器函数的 ES5 垫片（以 Babel + regeneratorRuntime 为代表）是如何工作的？
  *
- * ES5 本身是不支持 generator function（function* / yield）的;
- * 所以所谓“垫片（polyfill）”，本质上是把 generator 编译成一个状态机（state machine）+ 迭代器协议
+ * 结论先行：
+ * 1) ES5 没有原生 "暂停/恢复函数执行" 的能力；
+ * 2) 编译器把 generator 编译成：状态机 + 上下文对象 + iterator 接口；
+ * 3) 每次调用 next/throw/return，本质都是在驱动状态机向前走一步。
  *
- * Generator 的 ES5 垫片本质就是：
- * 把函数执行过程编译成一个“状态机 + iterator 对象”，用 next() 手动驱动执行
+ * ----------------------------
+ * 一、为什么一定是“状态机”
+ * ----------------------------
+ * 因为 ES5 层面没有 function* / yield，也没有可直接暴露给开发者的执行上下文挂起 API。
+ * 所以只能用一个状态变量（如 state/context.next）记录“下一步要执行到哪一段代码”。
  *
- * -- 最经典的实现就是 regenerator-runtime（由 Facebook 开源，用在 Babel 里）
+ * 每次 next()：
+ * - 进入 switch(state)
+ * - 执行当前分支
+ * - 更新 state 到下一位置
+ * - 返回 { value, done }
  *
- * 1. 核心思想：把 yield 变成状态机，本质是：yield → return { value, done }
- *            函数暂停 → 用 state 记录执行位置；
- *            内部通过闭包实现状态控制；
- * 2. regenerator 的真实结构
- * 真正的实现比上面复杂很多，因为要支持：yield*  try/catch  return()  throw()
- *
- * 为什么必须使用状态机，因为ES5：
- * 1. 没有“函数暂停能力”；
- * 2. 没有“携程”；
- * 3. 没有“栈冻结”；
- * 所以只能：用变量模拟执行位置； 这就是：编译器把控制流写成状态机。
- *
- * 这些能力，在es6是如何体现的：
- * 1. 可暂停执行（Suspend）针对 yield 操作，js引擎会做一件 ES5 做不到的事: 暂停当前函数执行，并冻结整个执行上下文；
- * 2. 可恢复执行（Resume）当调用生成器 .next() 方法时，引擎内部：恢复之前保存的执行上下文，从“断点位置”继续执行；
- * 3. 内建程序计数器（Program Counter）
- *    在es5，你需要用变量来切换状态：switch(state) {}；
- *    在 ES6：JS 引擎内部维护：[[GeneratorState]] 和 [[GeneratorContext]]，执行位置是引擎级别的，而不是 JS 层变量
- * 4. 执行上下文可冻结（Execution Context Snapshot）「最核心的能力」，在 ES6 generator 里：
- *    当执行到第一个 yield时， eg: x = 10; yield 10, 引擎会保存：x = 10;  当前作用域链;  当前执行位置; 下次恢复时：x 还是 10；
- * 5. Generator Object（控制接口）
- *    ES6 直接内建了生成器的 next/throw/return，对应内部操作为：ResumeNormal、ResumeThrow、ResumeReturn
- * 6. 协程（Coroutine-like）：generator 本质是“半协程”，可以在多个函数之间来回切换执行权
- *    虽然 JS 不是完全协程，但 generator 已经具备：主动让出执行权（yield）；外部恢复执行；
- *
- * 「ES6 是如何在规范层面定义的」：
- * 在 ECMA International 的规范里，generator 是通过这些内部槽实现的：
- * 【Generator 内部结构】：
+ * ----------------------------
+ * 二、ES6 generator 在引擎侧提供了什么
+ * ----------------------------
+ * 规范里可理解为（概念化描述）：
  * Generator {
  *   [[GeneratorState]]: "suspendedStart" | "suspendedYield" | "executing" | "completed"
- *   [[GeneratorContext]]: execution context
+ *   [[GeneratorContext]]: 执行上下文（由引擎内部维护）
  * }
- * 【next() 的本质流程】：
- * 1. 如果正在执行 → 报错（防止重入）
- * 2. 恢复 [[GeneratorContext]]
- * 3. 从上次 yield 位置继续执行
- * 4. 遇到 yield → 再次 suspend
- * 5. 返回 { value, done }
  *
- * 「yield 的规范行为」：
- * YieldExpression :
- *     yield AssignmentExpression
- * 做的事情：
- * · 暂停执行
- * · 返回 value
- * · 保存当前位置
- * · 等待 next() 恢复
+ * next() 的核心流程：
+ * 1. 若当前为 executing，抛错（防止重入）
+ * 2. 恢复此前挂起的执行上下文
+ * 3. 从上次 yield 处继续执行
+ * 4. 再遇到 yield 时再次挂起并返回 { value, done: false }
+ * 5. 结束时返回 { value, done: true }
  *
- * 综上：
- * ES5 的 regenerator：在 JS 层模拟“执行引擎”； 你写代码 → Babel → 状态机 → JS执行 （控制流在“用户代码”）
- * ES6 的 generator：把“执行引擎能力”直接做进 JS 引擎； 你写代码 → JS引擎直接理解 yield（控制流在“引擎内部”）
+ * ----------------------------
+ * 三、最小可运行模型（教学版）
+ * ----------------------------
+ * 下方代码分三层：
+ * A. 原生 generator 行为演示
+ * B. 纯 ES5 状态机手写版
+ * C. regenerator 风格骨架（wrap + innerFn + context + step）
  *
+ * 注意：真实 regeneratorRuntime 还会处理 yield*、try/catch/finally、return/throw 等复杂路径。
  */
 
-// 1. 把 yield 变成状态机
-function* gen() {
+// A. 原生 generator 行为演示
+function* nativeGen() {
     yield 1
     yield 2
     return 3
 }
-const g = gen()
-console.log(g.next())
-console.log(g.next())
-console.log(g.next())
-console.log(g.next())
-// 生成器函数 gen 的 es5 代码实现
-function gen() {
+
+const nativeIt = nativeGen()
+console.log('原生实现：', nativeIt.next()) // { value: 1, done: false }
+console.log('原生实现：', nativeIt.next()) // { value: 2, done: false }
+console.log('原生实现：', nativeIt.next()) // { value: 3, done: true }
+console.log('原生实现：', nativeIt.next()) // { value: undefined, done: true }
+
+// B. 纯 ES5 状态机手写版（只实现 next）
+function stateMachineGen() {
     var state = 0
     return {
         next: function () {
@@ -95,55 +79,57 @@ function gen() {
         },
     }
 }
-const gFn = gen()
-console.log('状态机实现：', gFn.next())
-console.log('状态机实现：', gFn.next())
-console.log('状态机实现：', gFn.next())
-console.log('状态机实现：', gFn.next())
 
-/**
- * 生成器函数的核心实现：
- * 1. 包装函数 genWrapper 函数；
- * 2. 状态机函数 innerFn;
- * 3. 执行上下文 context (核心逻辑);
- * 4. wrap：生成iterator
- * 5. step: 驱动执行
- */
+const smIt = stateMachineGen()
+console.log('状态机实现：', smIt.next())
+console.log('状态机实现：', smIt.next())
+console.log('状态机实现：', smIt.next())
+console.log('状态机实现：', smIt.next())
 
+// C. regenerator 风格骨架（教学简化版）
 function genWrapper() {
-    return regeneratorRunTime.wrap(innerFn)
+    // 真实 Babel 产物一般是：regeneratorRuntime.wrap(innerFn, outerFn, self, tryLocsList)
+    return regeneratorRuntime.wrap(innerFn)
 }
-function innerFn() {
+
+// 状态机主体：由编译器生成，context 用于记录“执行到哪里”
+function innerFn(context) {
     while (1) {
         switch ((context.prev = context.next)) {
             case 0:
                 context.next = 2
                 return 1
-
             case 2:
                 context.next = 4
                 return 2
-
             case 4:
+                context.rval = 3
+                return context.stop()
+            default:
                 return context.stop()
         }
     }
 }
-// 执行上下文的作用：1. 记录执行位置： next;  2. 控制流程（next, throw, return）；  3. 保存返回值
-var context = {
-    prev: 0,
-    next: 0,
-    done: false,
-    method: 'next',
-    arg: undefined,
-    stop: function () {
-        this.done = true
-        return this.rval
-    },
+
+// 每个迭代器都应该有独立 context，不能共用全局 context
+function createContext() {
+    return {
+        prev: 0,
+        next: 0,
+        done: false,
+        method: 'next',
+        arg: undefined,
+        rval: undefined,
+        stop: function () {
+            this.done = true
+            return this.rval
+        },
+    }
 }
-// wrap函数：生成 iterator
+
+// wrap：返回符合 iterator 协议的对象
 function wrap(innerFn) {
-    var context = createContext() // context是context对象的实例，这里是伪代码实现
+    var context = createContext()
 
     return {
         next: function (arg) {
@@ -156,14 +142,18 @@ function wrap(innerFn) {
             context.arg = arg
             return step(innerFn, context)
         },
+        return: function (arg) {
+            context.method = 'return'
+            context.arg = arg
+            context.rval = arg
+            context.done = true
+            return { value: arg, done: true }
+        },
     }
 }
-// step函数
+
+// step：驱动状态机执行一步，并统一包装 { value, done }
 function step(innerFn, context) {
     var value = innerFn(context)
-
-    return {
-        value: value,
-        done: context.done,
-    }
+    return { value: value, done: context.done }
 }
