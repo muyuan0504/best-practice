@@ -1,5 +1,9 @@
 /**
  * async...await 的常规用法
+ * 
+ * - await 只能在async的上下文中使用
+ * - await 会暂停当前async函数的执行，直到Promise解决后继续执行
+ * - await 会返回Promise的解决值
  */
 
 async function useAsync() {
