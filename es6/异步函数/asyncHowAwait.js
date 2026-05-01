@@ -63,6 +63,7 @@ function spawn(generatorFn) {
             // 如果写成 g.next()（不传值），对应 yield 的结果就是 undefined。
             
             Promise.resolve(next.value).then(
+                // 如果指示单纯的调用g.next(),那么只会触发生成器函数继续执行，而给它传递一个值:g.next(value),就能让对应的yield表达式在求值后取得这个值。
                 (val) => step(() => g.next(val)),
                 (err) => step(() => g.throw(err))
             )
@@ -114,3 +115,10 @@ function demoNextValueInjection() {
 }
 
 demoNextValueInjection()
+
+/**
+ * 总结：
+ * 异步函数 async 作为一个“语法糖”，它的背后有生成器函数、用于迭代yield表达式序列的spawn函数、以及yield到await的变换。
+ * 
+ * 所以说，异步函数其实是包在生成器和Promise外的一层“语法糖”，掌握异步函数背后的这些语言构造是非常重要的，有助于我们更深入地理解如何混合、搭配、联结这些异步执行机制。
+ */
